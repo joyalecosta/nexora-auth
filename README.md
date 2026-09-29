@@ -4,6 +4,10 @@ Sistema de autenticação e portal do cliente desenvolvido como parte do ecossis
 
 O projeto foi criado com foco no desenvolvimento de uma aplicação web organizada, segura e funcional, utilizando PHP e MySQL no backend e HTML/CSS na interface.
 
+## Preview
+
+![Página inicial do Nexora Auth](docs/screenshots/home.png)
+
 ## Sobre o projeto
 
 O Nexora Auth permite realizar o fluxo básico de autenticação de usuários e acesso a uma área restrita.
