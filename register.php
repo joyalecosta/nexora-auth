@@ -1,43 +1,126 @@
+
 <?php
-    require_once __DIR__ . "/config/database.php";
 
-    $message = "";
+session_start();
 
-    if ($_SERVER["REQUEST_METHOD"] === "POST") {
+require_once __DIR__ . "/config/database.php";
 
-        $name = $_POST["name"];
-        $email = $_POST["email"];
-        $password = $_POST["password"];
+// 1. Gerar token CSRF caso ainda não exista.
+if (empty($_SESSION["csrf_token"])) {
+    $_SESSION["csrf_token"] = bin2hex(random_bytes(32));
+}
 
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+$message = "";
+$messageType = "";
 
-        $sql = "INSERT INTO users (name, email, password)
-                VALUES (:name, :email, :password)";
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-        $stmt = $pdo->prepare($sql);
+    // 2. Validar token CSRF.
+    $submittedToken = $_POST["csrf_token"] ?? "";
+
+    if (
+            !is_string($submittedToken) ||
+            !hash_equals($_SESSION["csrf_token"], $submittedToken)
+    ) {
+        http_response_code(403);
+        exit("Requisição inválida. Atualize a página e tente novamente.");
+    }
+
+    // 3. Receber dados do formulário.
+    $nameInput = $_POST["name"] ?? "";
+    $emailInput = $_POST["email"] ?? "";
+    $passwordInput = $_POST["password"] ?? "";
+
+    // 4. Validar tipos de entrada.
+    if (
+            !is_string($nameInput) ||
+            !is_string($emailInput) ||
+            !is_string($passwordInput)
+    ) {
+        http_response_code(400);
+        exit("Dados inválidos.");
+    }
+
+    // 5. Normalizar dados.
+    $name = trim($nameInput);
+    $email = strtolower(trim($emailInput));
+    $password = $passwordInput;
+
+    // 6. Validar campos.
+    if ($name === "" || $email === "" || $password === "") {
+
+        $message = "Preencha todos os campos.";
+        $messageType = "error";
+
+    } elseif (
+            strlen($email) > 150 ||
+            !filter_var($email, FILTER_VALIDATE_EMAIL)
+    ) {
+
+        $message = "Informe um e-mail válido com até 150 caracteres.";
+        $messageType = "error";
+
+    } elseif (mb_strlen($name, "UTF-8") > 100) {
+
+        $message = "O nome deve ter no máximo 100 caracteres.";
+        $messageType = "error";
+
+    } elseif (
+            strlen($password) < 8 ||
+            strlen($password) > 1024
+    ) {
+
+        $message = "A senha deve ter entre 8 e 1024 bytes.";
+        $messageType = "error";
+
+    } else {
+
+        // 7. Gerar hash seguro da senha.
+        $hashedPassword = password_hash(
+                $password,
+                PASSWORD_DEFAULT
+        );
+
+        // 8. Inserir usuário com consulta preparada.
+        $sql = "
+            INSERT INTO users (name, email, password)
+            VALUES (:name, :email, :password)
+        ";
 
         try {
 
+            $stmt = $pdo->prepare($sql);
+
             $stmt->execute([
-                ":name" => $name,
-                ":email" => $email,
-                ":password" => $hashedPassword
+                    ":name" => $name,
+                    ":email" => $email,
+                    ":password" => $hashedPassword
             ]);
 
-            $message = "Usuário cadastrado com sucesso!";
+            $message = "Conta criada com sucesso!";
+            $messageType = "success";
 
         } catch (PDOException $e) {
 
-            if ($e->errorInfo[1] == 1062) {
+            // MySQL 1062: valor duplicado em campo UNIQUE.
+            if (
+                    $e->getCode() === "23000" &&
+                    (int) ($e->errorInfo[1] ?? 0) === 1062
+            ) {
 
                 $message = "Este e-mail já está cadastrado.";
 
             } else {
 
-                $message = "Erro ao cadastrar usuário.";
+                error_log("Falha ao cadastrar usuário.");
+                $message = "Não foi possível criar a conta.";
             }
+
+            $messageType = "error";
         }
     }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -45,80 +128,147 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+            name="description"
+            content="Crie sua conta no Nexora Auth"
+    >
 
     <title>Criar conta | Nexora Auth</title>
 
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link
+            rel="stylesheet"
+            href="/nexora-auth/assets/css/style.css"
+    >
 </head>
 
 <body>
 
-    <main>
+<main class="login-container">
 
-        <h1>Criar conta</h1>
+    <section class="login-card">
 
-        <p>Crie sua conta na Nexora.</p>
+        <header class="login-header">
 
-        <?php if ($message !== ""): ?>
+            <a href="login.php" class="logo">
+                <span>N</span>EXORA
+            </a>
 
-            <p>
-                <?= htmlspecialchars($message) ?>
+            <p class="subtitle">
+                Sistema de autenticação
             </p>
 
-        <?php endif; ?>
+        </header>
 
-        <form action="register.php" method="POST">
+        <!-- Conteúdo principal do cadastro -->
+        <div class="login-content">
 
-            <div>
-                <label for="name">Nome</label>
+            <h1>Criar conta</h1>
 
-                <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    placeholder="Digite seu nome"
-                    required
+            <p class="login-description">
+                Cadastre-se para acessar sua conta Nexora.
+            </p>
+
+            <?php if ($message !== ""): ?>
+
+                <p
+                        class="register-message <?= htmlspecialchars($messageType, ENT_QUOTES, "UTF-8") ?>"
+                        role="status"
                 >
-            </div>
+                    <?= htmlspecialchars(
+                            $message,
+                            ENT_QUOTES,
+                            "UTF-8"
+                    ) ?>
+                </p>
 
-            <div>
-                <label for="email">E-mail</label>
+            <?php endif; ?>
 
+            <form action="register.php" method="POST">
+
+                <!-- Token CSRF -->
                 <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    placeholder="Digite seu e-mail"
-                    required
+                        type="hidden"
+                        name="csrf_token"
+                        value="<?= htmlspecialchars(
+                                $_SESSION["csrf_token"],
+                                ENT_QUOTES,
+                                "UTF-8"
+                        ) ?>"
                 >
-            </div>
 
-            <div>
-                <label for="password">Senha</label>
+                <div class="form-group">
 
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Digite sua senha"
-                    required
+                    <label for="name">Nome</label>
+
+                    <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            placeholder="Digite seu nome"
+                            autocomplete="name"
+                            maxlength="100"
+                            required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="email">E-mail</label>
+
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Digite seu e-mail"
+                            autocomplete="email"
+                            maxlength="150"
+                            required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="password">Senha</label>
+
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Digite sua senha"
+                            autocomplete="new-password"
+                            minlength="8"
+                            required
+                    >
+
+                </div>
+
+                <button
+                        type="submit"
+                        class="login-button"
                 >
-            </div>
+                    Criar conta
+                </button>
 
-            <button type="submit">
-                Criar conta
-            </button>
+            </form>
 
-        </form>
+            <p class="register-link">
+                Já possui uma conta?
+                <a href="login.php">Entrar</a>
+            </p>
 
-        <p>
-            Já possui uma conta?
-            <a href="index.php">Entrar</a>
-        </p>
+        </div>
 
-    </main>
+    </section>
+
+</main>
 
 </body>
-
 </html>

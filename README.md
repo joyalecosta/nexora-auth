@@ -1,8 +1,6 @@
 # Nexora Auth
 
-Sistema de autenticação e portal do cliente desenvolvido como parte do ecossistema **Nexora Serviços Digitais**.
-
-O projeto foi criado com foco no desenvolvimento de uma aplicação web organizada, segura e funcional, utilizando PHP e MySQL no backend e HTML/CSS na interface.
+Sistema de autenticação e portal demonstrativo de clientes desenvolvido como parte da **Nexora Serviços Digitais**, integrante do ecossistema **Ada's Legacy**.
 
 ## Preview
 
@@ -10,20 +8,21 @@ O projeto foi criado com foco no desenvolvimento de uma aplicação web organiza
 
 ## Sobre o projeto
 
-O Nexora Auth permite realizar o fluxo básico de autenticação de usuários e acesso a uma área restrita.
+O **Nexora Auth** é uma aplicação web desenvolvida em PHP e MySQL para demonstrar um fluxo de autenticação, gerenciamento de sessões e acesso a uma área restrita.
 
-Atualmente, o sistema possui:
+O projeto integra meu portfólio de desenvolvimento web e representa a aplicação prática de conceitos de back-end, banco de dados e segurança de aplicações.
+
+### Funcionalidades
 
 - Cadastro de usuários
 - Login com e-mail e senha
-- Senhas armazenadas utilizando hash
-- Validação de credenciais
-- Sessões em PHP
-- Área autenticada do cliente
+- Armazenamento seguro de senhas com hash
+- Gerenciamento de sessões PHP
+- Dashboard protegido por autenticação
 - Exibição de dados da conta
-- Página de serviços
-- Logout e encerramento da sessão
-- Interface responsiva seguindo a identidade visual da Nexora
+- Página demonstrativa de acompanhamento de serviços
+- Logout por requisição POST
+- Interface responsiva
 
 ## Tecnologias
 
@@ -31,31 +30,65 @@ Atualmente, o sistema possui:
 - CSS3
 - PHP
 - MySQL
-- PDO
-- Git
-- GitHub
-- XAMPP
+- PDO (PHP Data Objects)
+- Git e GitHub
+- XAMPP (ambiente de desenvolvimento local)
 
-## Segurança
+## Medidas de segurança implementadas
 
-Algumas práticas utilizadas no projeto:
+- Hash de senhas com `password_hash()`
+- Verificação de senhas com `password_verify()`
+- Consultas parametrizadas com PDO
+- Tokens CSRF em formulários protegidos
+- Validação de tokens com `hash_equals()`
+- Renovação do identificador de sessão após login
+- Limitação de tentativas de login por IP e e-mail, com janela de 15 minutos
+- Escape de dados exibidos com `htmlspecialchars()`
+- Arquivo local de credenciais excluído do versionamento Git
 
-- `password_hash()` para armazenamento seguro de senhas
-- `password_verify()` para autenticação
-- Prepared Statements com PDO
-- Sessões PHP para controle de autenticação
-- `htmlspecialchars()` na exibição de dados
-- Arquivos de configuração sensíveis protegidos pelo `.gitignore`
+**Nota:** Essas medidas reduzem riscos conhecidos, mas não substituem testes especializados ou uma auditoria de segurança antes da utilização em produção.
 
-## Estrutura
+## Requisitos
+
+- PHP com extensão PDO MySQL habilitada
+- MySQL ou MariaDB compatível
+- Servidor web com suporte a PHP
+- XAMPP para execução local (opcional)
+
+## Instalação local com XAMPP
+
+1. Abra o terminal e clone o repositório na pasta `htdocs`:
+
+   ```powershell
+   cd C:\xampp\htdocs
+   git clone https://github.com/joyalecosta/nexora-auth.git
+   ```
+
+2. Inicie o Apache e o MySQL pelo painel do XAMPP.
+
+3. Importe `database/schema.sql` pelo phpMyAdmin para criar o banco `nexora_auth` e suas tabelas.
+
+4. Copie o arquivo `config/database.example.php` para `config/database.php`.
+
+5. Configure as credenciais do MySQL em `config/database.php`.
+
+6. Acesse no navegador:
+
+   `http://localhost/nexora-auth/`
+
+## Estrutura principal
 
 ```text
 nexora-auth/
 ├── assets/
 │   ├── css/
-│   │   └── style.css
 │   └── img/
 ├── config/
+│   └── database.example.php
+├── database/
+│   └── schema.sql
+├── docs/
+│   └── screenshots/
 ├── dashboard.php
 ├── index.php
 ├── login.php
@@ -66,52 +99,42 @@ nexora-auth/
 └── README.md
 ```
 
-> O arquivo local de configuração do banco de dados não é versionado para evitar a exposição de credenciais.
+O arquivo `config/database.php` deve ser criado localmente e não deve ser enviado ao repositório.
 
 ## Banco de dados
 
-O projeto utiliza MySQL.
+O projeto utiliza duas tabelas principais:
 
-A aplicação trabalha com uma tabela de usuários contendo informações como:
+**users**
 
-- ID
-- Nome
-- E-mail
-- Senha
-- Data de criação
+Armazena os dados dos usuários cadastrados, incluindo o hash da senha.
 
-## Identidade visual
+**login_attempts**
 
-A interface utiliza a identidade visual da **Nexora**, com uma proposta tecnológica e moderna baseada em:
+Registra tentativas de login utilizadas pelo mecanismo de limitação de tentativas.
 
-- Dark mode
-- Azul
-- Ciano
-- Roxo
-- Gradientes
-- Componentes responsivos
+O arquivo `database/schema.sql` contém a estrutura necessária para criar as tabelas, sem dados pessoais de usuários.
 
-## Objetivo
+## Limitações atuais
 
-O Nexora Auth faz parte do meu processo de desenvolvimento e evolução em aplicações web.
-
-O projeto também representa uma das bases para o futuro ecossistema digital da Nexora, no qual autenticação, serviços e experiência do cliente poderão ser integrados em uma única plataforma.
+- O acompanhamento de serviços utiliza informações demonstrativas.
+- A recuperação de senha ainda não foi implementada.
+- O projeto foi desenvolvido e testado inicialmente em ambiente local.
+- A implantação pública exige HTTPS, proteção de credenciais e revisão adicional de segurança.
 
 ## Próximas melhorias
 
-- Validações adicionais no backend
-- Melhorias nas mensagens de erro
-- Recuperação de senha
-- Tokens com expiração
+- Recuperação de senha por e-mail
+- Melhorias no tratamento de erros
+- Aprimoramento da acessibilidade
 - Evolução do portal do cliente
-- Melhorias de acessibilidade
-- Aprimoramento da responsividade
-- Deploy em ambiente Linux
+- Testes automatizados
+- Deploy em servidor Linux
 
 ## Autora
 
 **Joyce Costa**
 
-Profissional de Tecnologia da Informação com experiência em infraestrutura, suporte e observabilidade, atualmente ampliando sua atuação em desenvolvimento web.
+Projeto desenvolvido para estudo de desenvolvimento web back-end e composição de portfólio profissional.
 
-Desenvolvido como parte da **Nexora Serviços Digitais**.
+GitHub: https://github.com/joyalecosta
