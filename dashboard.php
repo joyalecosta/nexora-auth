@@ -90,7 +90,7 @@ $accountStatus = "Autenticada";
 <!-- Cabeçalho -->
 <header class="dashboard-header">
 
-    <a href="dashboard.php" class="logo">
+    <a href="index.php" class="logo">
         <span>N</span>EXORA
     </a>
     <form action="logout.php" method="POST" class="logout-form">
