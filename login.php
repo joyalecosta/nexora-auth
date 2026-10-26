@@ -191,7 +191,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <header class="login-header">
 
-            <a href="login.php" class="logo">
+            <a href="index.php" class="logo">
                 <span>N</span>EXORA
             </a>
 
